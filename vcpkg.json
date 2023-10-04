@@ -1,0 +1,11 @@
+{
+    "name": "test",
+    "version-string": "0.0.1",
+    "dependencies": [
+        "spdlog",
+        "stdexec",
+        "libunifex",
+        "asio",
+        "gtest"
+    ]
+}
