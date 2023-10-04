@@ -1,0 +1,16 @@
+BasedOnStyle: LLVM
+
+AccessModifierOffset: -4
+AllowShortIfStatementsOnASingleLine: false
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+BreakBeforeBraces: Allman
+BreakConstructorInitializers: BeforeComma
+ColumnLimit: 120
+IndentCaseLabels: true
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+PointerAlignment: Left
+SortIncludes: true
+Standard: 'Latest'
