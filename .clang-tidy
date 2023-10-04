@@ -1,0 +1,44 @@
+Checks: >
+  -*,
+  bugprone-*,
+  google-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -google-runtime-int,
+  -google-runtime-references,
+  -misc-non-private-member-variables-in-classes,
+  -readability-named-parameter,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -readability-redundant-access-specifiers,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -modernize-use-constraints,
+  -modernize-use-ranges,
+
+# Turn all the warnings from the checks above into errors.
+WarningsAsErrors: "*"
+
+CheckOptions:
+  - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }
+  - { key: readability-identifier-naming.ClassCase,              value: camelCase  }
+  - { key: readability-identifier-naming.StructCase,             value: camelCase  }
+  - { key: readability-identifier-naming.TemplateParameterCase,  value: camelCase  }
+  - { key: readability-identifier-naming.FunctionCase,           value: camelCase  }
+  - { key: readability-identifier-naming.VariableCase,           value: camelCase  }
+  - { key: readability-identifier-naming.PrivateMemberSuffix,    value: _          }
+  - { key: readability-identifier-naming.ProtectedMemberSuffix,  value: _          }
+  - { key: readability-identifier-naming.MacroDefinitionCase,    value: UPPER_CASE }
+  - { key: readability-identifier-naming.EnumConstantCase,         value: camelCase }
+  - { key: readability-identifier-naming.EnumConstantPrefix,       value: k         }
+  - { key: readability-identifier-naming.ConstexprVariableCase,    value: camelCase }
+  - { key: readability-identifier-naming.ConstexprVariablePrefix,  value: k         }
+  - { key: readability-identifier-naming.GlobalConstantCase,       value: camelCase }
+  - { key: readability-identifier-naming.GlobalConstantPrefix,     value: k         }
+  - { key: readability-identifier-naming.MemberConstantCase,       value: camelCase }
+  - { key: readability-identifier-naming.MemberConstantPrefix,     value: k         }
+  - { key: readability-identifier-naming.StaticConstantCase,       value: camelCase }
+  - { key: readability-identifier-naming.StaticConstantPrefix,     value: k         }
