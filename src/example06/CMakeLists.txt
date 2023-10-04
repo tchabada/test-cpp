@@ -1,0 +1,2 @@
+add_executable(example06 main.cpp)
+target_link_libraries(example06 PRIVATE project_warnings project_options)
