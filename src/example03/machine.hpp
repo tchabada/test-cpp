@@ -1,17 +1,15 @@
 #pragma once
 
 #include <cstddef>
-#include <deque>
 #include <functional>
 #include <iostream>
 #include <mutex>
 #include <tuple>
 #include <type_traits>
+#include <vector>
 
 #define NO_VARIANT
 
-#ifdef NO_VARIANT
-// C++14
 namespace detail
 {
 template <class T, class Tuple> struct Index
@@ -28,27 +26,34 @@ template <class T, class U, class... Types> struct Index<T, std::tuple<U, Types.
 {
     static constexpr std::size_t value = 1 + Index<T, std::tuple<Types...>>::value;
 };
+} // namespace detail
 
-template <typename Tuple, typename F, size_t... Is>
-constexpr void applyImpl(Tuple&& t, F&& f, std::index_sequence<Is...>)
+#ifdef NO_VARIANT
+// C++14
+namespace detail
 {
-    auto l = {((void)std::forward<F>(f)(std::get<Is>(std::forward<Tuple>(t))), false)...};
+template <typename Tuple, typename F, size_t... Is>
+constexpr void forEachImpl(Tuple&& t, F&& f, std::index_sequence<Is...>)
+{
+    auto&&                      func = std::forward<F>(f);
+    std::initializer_list<bool> l    = {((void)func(std::get<Is>(std::forward<Tuple>(t))), false)...};
     static_cast<void>(l);
-    // [](...) {}(((void)std::forward<F>(f)(std::get<Is>(std::forward<Tuple>(t))), false)...);
+    // [](...) {}(((void)func(std::get<Is>(std::forward<Tuple>(t))), false)...);
 }
 
-template <typename Tuple, typename F> constexpr void apply(Tuple&& t, F&& f)
+template <typename Tuple, typename F> constexpr void forEach(Tuple&& t, F&& f)
 {
-    applyImpl(std::forward<Tuple>(t), std::forward<F>(f),
-              std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>{}>{});
+    forEachImpl(std::forward<Tuple>(t), std::forward<F>(f),
+                std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>{}>{});
 }
 
 template <class Tuple, class F, std::size_t... Is>
 constexpr void visitImpl(Tuple&& t, const std::size_t i, F&& f, std::index_sequence<Is...>)
 {
-    auto l = {(i == Is && (std::forward<F>(f)(std::get<Is>(std::forward<Tuple>(t))), false))...};
+    auto&&                      func = std::forward<F>(f);
+    std::initializer_list<bool> l    = {(i == Is && (func(std::get<Is>(std::forward<Tuple>(t))), false))...};
     static_cast<void>(l);
-    // [](...) {}((i == Is && ((void)std::forward<F>(f)(std::get<Is>(std::forward<Tuple>(t))), false))...);
+    // [](...) {}((i == Is && ((void)func(std::get<Is>(std::forward<Tuple>(t))), false))...);
 }
 
 template <class Tuple, class F> constexpr void visit(Tuple&& t, const std::size_t i, F&& f)
@@ -65,7 +70,7 @@ struct Event
 template <typename T, typename M> class State
 {
     friend T;
-    template <typename... States> friend class Machine;
+    friend M;
 
 public:
     State(const State&)            = delete;
@@ -78,6 +83,10 @@ public:
 
     template <typename S> void transit() { mMachine->M::template transit<T, S>(); }
 
+protected:
+    decltype(auto) context() { return mMachine->context(); }
+    decltype(auto) context() const { return mMachine->context(); }
+
 private:
     State() = default;
 
@@ -87,7 +96,7 @@ private:
     M* mMachine = nullptr;
 };
 
-template <typename... States> class Machine final
+template <typename Context, typename... States> class Machine final
 {
     static_assert(sizeof...(States) > 0, "states are empty");
 
@@ -95,11 +104,18 @@ template <typename... States> class Machine final
 
 public:
     template <typename... Params>
-    Machine(Params&&... params)
-        : mStates{std::forward<Params>(params)...}
+    explicit Machine(Context& data,
+                     Params&&... params) noexcept(std::is_nothrow_constructible<TupleType, Params&&...>::value)
+        : mContext{data}
+        , mStates{std::forward<Params>(params)...}
     {
-        detail::apply(mStates, [this](auto& s) { s.setMachine(this); });
+        detail::forEach(mStates, [this](auto& s) { s.setMachine(this); });
     }
+
+    Machine(const Machine&)            = delete;
+    Machine& operator=(const Machine&) = delete;
+    Machine(Machine&&)                 = delete;
+    Machine& operator=(Machine&&)      = delete;
 
     ~Machine() = default;
 
@@ -119,9 +135,18 @@ public:
         detail::visit(mStates, mCurrentIndex, [this, &event](auto& s) { s.react(event); });
     }
 
-    template <typename S> S& get() { return std::get<S>(mStates); }
+    template <typename S> S& state() { return std::get<S>(mStates); }
+
+    size_t                                        currentIndex() const { return mCurrentIndex; }
+    template <typename S> static constexpr size_t stateIndex() { return detail::Index<S, TupleType>::value; }
+
+    template <typename F> void visit(F&& f) const { detail::visit(mStates, mCurrentIndex, std::forward<F>(f)); }
+
+    Context&       context() { return mContext; }
+    const Context& context() const { return mContext; }
 
 private:
+    Context&  mContext;
     TupleType mStates;
     size_t    mCurrentIndex{0};
 };
@@ -136,7 +161,7 @@ struct Event
 template <typename T, typename M> class State
 {
     friend T;
-    template <typename... States> friend class Machine;
+    friend M;
 
 public:
     State(const State&)            = delete;
@@ -149,6 +174,10 @@ public:
 
     template <typename S> void transit() { mMachine->Machine::template transit<S>(); }
 
+protected:
+    decltype(auto) context() { return mMachine->context(); }
+    decltype(auto) context() const { return mMachine->context(); }
+
 private:
     State() = default;
 
@@ -158,18 +187,29 @@ private:
     M* mMachine = nullptr;
 };
 
-template <typename... States> class Machine final
+template <typename Context, typename... States> class Machine final
 {
     static_assert(sizeof...(States) > 0, "states are empty");
 
+    using TupleType = std::tuple<States...>;
+
 public:
     template <typename... Params>
-    Machine(Params&&... params)
-        : mStates{std::forward<Params>(params)...}
+    explicit Machine(Context& data,
+                     Params&&... params) noexcept(std::is_nothrow_constructible<TupleType, Params&&...>::value)
+        : mContext{data}
+        , mStates{std::forward<Params>(params)...}
     {
         auto l = [this](auto& e) { e.setMachine(this); };
         std::apply([&l](auto&&... x) { (l(x), ...); }, mStates);
     }
+
+    Machine(const Machine&)            = delete;
+    Machine& operator=(const Machine&) = delete;
+    Machine(Machine&&)                 = delete;
+    Machine& operator=(Machine&&)      = delete;
+
+    ~Machine() = default;
 
     void start()
     {
@@ -188,7 +228,18 @@ public:
         std::visit([&event](auto s) { s->react(event); }, mCurrentState);
     }
 
+    template <typename S> S& state() { return std::get<S>(mStates); }
+
+    constexpr size_t                              currentIndex() const { return mCurrentState.index(); }
+    template <typename S> static constexpr size_t stateIndex() { return detail::Index<S, TupleType>::value; }
+
+    template <typename F> void visit(F&& f) const { std::visit(std::forward<F>(f), mCurrentState); }
+
+    Context&       context() { return mContext; }
+    const Context& context() const { return mContext; }
+
 private:
+    Context&                 mContext;
     std::tuple<States...>    mStates;
     std::variant<States*...> mCurrentState{&std::get<0>(mStates)};
 };
@@ -229,6 +280,6 @@ private:
     M&         mMachine;
     std::mutex mMutex;
 
-    using Events = std::deque<std::function<void()>>;
+    using Events = std::vector<std::function<void()>>;
     Events mEvents;
 };
