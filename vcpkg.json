@@ -2,9 +2,9 @@
     "name": "test",
     "version-string": "0.0.1",
     "dependencies": [
-        "catch2",
         "fmt",
+        "stdexec",
         "libunifex",
-        "stdexec"
+        "gtest"
     ]
 }

@@ -2,33 +2,55 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "clang",
-            "displayName": "Clang",
-            "description": "Using compilers: C = /usr/sbin/clang, CXX = /usr/sbin/clang++",
+            "name": "gcc",
+            "displayName": "GCC",
+            "description": "Using compilers: C = gcc, CXX = g++",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "binaryDir": "${sourceDir}/build",
             "toolchainFile": "$env{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/sbin/clang",
-                "CMAKE_CXX_COMPILER": "/usr/sbin/clang++",
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_CXX_STANDARD": "20"
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_CXX_STANDARD": "23"
             }
         },
         {
-            "name": "gcc",
-            "displayName": "GCC",
-            "description": "Using compilers: C = /usr/sbin/gcc, CXX = /usr/sbin/g++",
+            "name": "clang",
+            "displayName": "Clang",
+            "description": "Using compilers: C = clang, CXX = clang++",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "binaryDir": "${sourceDir}/build",
             "toolchainFile": "$env{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/sbin/gcc",
-                "CMAKE_CXX_COMPILER": "/usr/sbin/g++",
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_CXX_STANDARD": "20"
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_CXX_STANDARD": "23"
+            }
+        },
+        {
+            "name": "msvc",
+            "displayName": "MSVC",
+            "description": "Using compilers: C = cl.exe, CXX = cl.exe",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_CXX_STANDARD": "23"
             }
         }
     ]
