@@ -2,21 +2,6 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "clang",
-            "displayName": "Clang",
-            "description": "Using compilers: C = /usr/sbin/clang, CXX = /usr/sbin/clang++",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "toolchainFile": "$env{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-            "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "/usr/sbin/clang",
-                "CMAKE_CXX_COMPILER": "/usr/sbin/clang++",
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_CXX_STANDARD": "20"
-            }
-        },
-        {
             "name": "gcc",
             "displayName": "GCC",
             "description": "Using compilers: C = /usr/sbin/gcc, CXX = /usr/sbin/g++",

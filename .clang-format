@@ -1,7 +1,6 @@
 BasedOnStyle: LLVM
 
 AccessModifierOffset: -4
-AllowShortIfStatementsOnASingleLine: false
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 BreakBeforeBraces: Allman

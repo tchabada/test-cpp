@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.10)
+
+include(cmake/Vcpkg.cmake)
 
 # Set global property (all targets are impacted)
 set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
@@ -21,12 +23,16 @@ set_project_warnings(project_warnings)
 include(cmake/Sanitizers.cmake)
 enable_sanitizers(project_options)
 
-option(ENABLE_TESTING "Enable Test Builds" ON)
-
-if(ENABLE_TESTING)
-  enable_testing()
-  message("Building Tests. Be sure to check out test/constexpr_tests for constexpr testing")
-  add_subdirectory(test)
-endif()
-
 add_subdirectory(src)
+
+enable_testing()
+
+set(TESTS_INCLUDE_DIRS
+    ${PROJECT_SOURCE_DIR}/src
+)
+
+include_directories(
+    ${TESTS_INCLUDE_DIRS}
+)
+
+add_subdirectory(test)
