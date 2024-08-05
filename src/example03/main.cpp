@@ -1,8 +1,29 @@
 #include "machine.hpp"
 
+#include <cstdint>
 #include <iostream>
 
-struct Continue : Event
+struct ContinueEvent : fsm::Event
+{
+};
+
+enum class UpdateType : uint8_t
+{
+    Major,
+    Minor
+};
+
+struct UpdateEvent : fsm::Event
+{
+    consteval UpdateEvent(UpdateType tickType)
+        : _updateType{tickType}
+    {
+    }
+
+    UpdateType _updateType;
+};
+
+struct MyContext
 {
 };
 
@@ -11,104 +32,117 @@ struct Started;
 struct State1;
 struct State2;
 
-using MyMachine = Machine<Stopped, Started, State1, State2>;
+using MyMachine = fsm::Machine<MyContext, Stopped, Started, State1, State2>;
 
-struct Data
+struct Stopped : public fsm::State<Stopped, MyMachine>
 {
-};
-
-struct Stopped : public State<Stopped, MyMachine>
-{
-    Stopped(Data& d)
-        : data(d)
-    {
-    }
+    Stopped() {}
 
     void entry() { std::cout << "STOPPED entry" << std::endl; }
     void exit() { std::cout << "STOPPED exit" << std::endl; }
 
-    void react(Event const&) {}
-    void react(const Continue&)
-    {
-        std::cout << "STOPPED react on Continue" << std::endl;
-        transit<Started>();
-    };
+    void react(fsm::Event const&) {}
 
-    Data& data;
+    void react(const ContinueEvent&)
+    {
+        std::cout << "STOPPED react on ContinueEvent" << std::endl;
+        transit<Started>();
+    }
+
+    void react(UpdateEvent updateEvent)
+    {
+        std::string updateType = updateEvent._updateType == UpdateType::Major ? "Major" : "Minor";
+        std::cout << "STOPPED react on UpdateEvent " << updateType << std::endl;
+    }
 };
 
-struct Started : public State<Started, MyMachine>
+struct Started : public fsm::State<Started, MyMachine>
 {
-    Started(Data& d)
-        : data(d)
-    {
-    }
+    Started() {}
 
     void entry() { std::cout << "STARTED entry" << std::endl; }
     void exit() { std::cout << "STARTED exit" << std::endl; }
 
-    void react(Event const&) {}
-    void react(const Continue&)
-    {
-        std::cout << "STARTED react on Continue" << std::endl;
-        transit<State1>();
-    };
+    void react(fsm::Event const&) {}
 
-    Data& data;
+    void react(const ContinueEvent&)
+    {
+        std::cout << "STARTED react on ContinueEvent" << std::endl;
+        transit<State1>();
+    }
+
+    void react(UpdateEvent updateEvent)
+    {
+        std::string updateType = updateEvent._updateType == UpdateType::Major ? "Major" : "Minor";
+        std::cout << "STOPPED react on UpdateEvent " << updateType << std::endl;
+    }
 };
 
-struct State1 : public State<State1, MyMachine>
+struct State1 : public fsm::State<State1, MyMachine>
 {
-    State1(Data& d)
-        : data(d)
-    {
-    }
+    State1() {}
 
     void entry() { std::cout << "STATE1 entry" << std::endl; }
     void exit() { std::cout << "STATE1 exit" << std::endl; }
 
-    void react(Event const&) {}
-    void react(const Continue&)
-    {
-        std::cout << "STATE1 react on Continue" << std::endl;
-        transit<State2>();
-    };
+    void react(fsm::Event const&) {}
 
-    Data& data;
+    void react(const ContinueEvent&)
+    {
+        std::cout << "STATE1 react on ContinueEvent" << std::endl;
+        transit<State2>();
+    }
+
+    void react(UpdateEvent updateEvent)
+    {
+        std::string updateType = updateEvent._updateType == UpdateType::Major ? "Major" : "Minor";
+        std::cout << "STOPPED react on UpdateEvent " << updateType << std::endl;
+    }
 };
 
-struct State2 : public State<State2, MyMachine>
+struct State2 : public fsm::State<State2, MyMachine>
 {
-    State2(Data& d)
-        : data(d)
-    {
-    }
+    State2() {}
 
     void entry() { std::cout << "STATE2 entry" << std::endl; }
     void exit() { std::cout << "STATE2 exit" << std::endl; }
 
-    void react(Event const&) {}
-    void react(const Continue&)
-    {
-        std::cout << "STATE2 react on Continue" << std::endl;
-        transit<Stopped>();
-    };
+    void react(fsm::Event const&) {}
 
-    Data& data;
+    void react(const ContinueEvent&)
+    {
+        std::cout << "STATE2 react on ContinueEvent" << std::endl;
+        transit<Stopped>();
+    }
+
+    void react(UpdateEvent updateEvent)
+    {
+        std::string updateType = updateEvent._updateType == UpdateType::Major ? "Major" : "Minor";
+        std::cout << "STOPPED react on UpdateEvent " << updateType << std::endl;
+    }
 };
 
 int main()
 {
-    Data      data;
-    MyMachine machine{Stopped{data}, Started{data}, State1{data}, State2{data}};
+    MyContext context;
+    MyMachine machine{context};
+
     machine.start();
 
-    machine.dispatch(Continue{});
-    machine.dispatch(Continue{});
+    machine.dispatch(UpdateEvent{UpdateType::Major});
+    machine.dispatch(ContinueEvent{});
 
-    MachineDispatcher<MyMachine> dispatcher{machine};
-    dispatcher.post(Continue{});
-    dispatcher.post(Continue{});
+    machine.dispatch(UpdateEvent{UpdateType::Major});
+    machine.dispatch(ContinueEvent{});
+
+    fsm::MachineDispatcher<MyMachine> dispatcher{machine};
+
+    dispatcher.post(UpdateEvent{UpdateType::Minor});
+    dispatcher.post(ContinueEvent{});
+
+    dispatcher.post(UpdateEvent{UpdateType::Minor});
+    dispatcher.post(ContinueEvent{});
+
     dispatcher.processEvents();
 
     return 0;
